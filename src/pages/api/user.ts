@@ -2,7 +2,10 @@ import User from "@/models/User";
 import type { NextApiRequest, NextApiResponse } from "next";
 import bcrypt from "bcrypt";
 
-export default async (req: NextApiRequest, res: NextApiResponse) => {
+export default async function UserHandler(
+  req: NextApiRequest,
+  res: NextApiResponse
+) {
   switch (req.method) {
     // create user
     case "POST":
@@ -39,4 +42,4 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
       break;
   }
   res.end();
-};
+}

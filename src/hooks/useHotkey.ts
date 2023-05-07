@@ -33,11 +33,11 @@ function shouldFireEvent(
   return true;
 }
 
-export default (
+export default function useHotkey(
   hotkeys: HotkeyItem[],
   tagsToIgnore: string[] = ["INPUT", "TEXTAREA", "SELECT"],
   triggerOnContentEditable = false
-) => {
+) {
   useEffect(() => {
     const keydownListener = (event: KeyboardEvent) => {
       hotkeys.forEach(
@@ -60,4 +60,4 @@ export default (
     return () =>
       document.documentElement.removeEventListener("keydown", keydownListener);
   }, [hotkeys]);
-};
+}

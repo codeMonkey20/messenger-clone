@@ -1,10 +1,10 @@
 import { useEffect, useState } from "react";
 
-export default () => {
+export default function usePageFocus() {
   const [isPageFocus, setIsPageFocus] = useState(false);
 
   useEffect(() => {
-    setIsPageFocus(typeof document !== 'undefined' && document.hasFocus()); // Focus for additional renders
+    setIsPageFocus(typeof document !== "undefined" && document.hasFocus()); // Focus for additional renders
 
     const onFocus = () => setIsPageFocus(true);
     const onBlur = () => setIsPageFocus(false);
@@ -19,4 +19,4 @@ export default () => {
   }, []);
 
   return isPageFocus;
-};
+}

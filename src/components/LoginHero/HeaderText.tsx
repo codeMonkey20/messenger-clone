@@ -1,6 +1,6 @@
 import { HTMLAttributes } from "react";
 
-export default ({ children }: HTMLAttributes<HTMLHeadingElement>) => {
+const HeaderText = ({ children }: HTMLAttributes<HTMLHeadingElement>) => {
   return (
     <div className={"lg:w-96"}>
       <h1
@@ -13,3 +13,4 @@ export default ({ children }: HTMLAttributes<HTMLHeadingElement>) => {
     </div>
   );
 };
+export default HeaderText;

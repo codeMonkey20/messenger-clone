@@ -1,10 +1,10 @@
 import { useEffect, useState, useRef } from "react";
 
-export default <T = any>(
+export default function useDebouncedValue<T = any>(
   value: T,
   wait: number,
   options = { leading: false }
-) => {
+) {
   const [_value, setValue] = useState(value);
   const mountedRef = useRef(false);
   const timeoutRef = useRef<number>();
@@ -33,4 +33,4 @@ export default <T = any>(
   }, []);
 
   return [_value, cancel] as const;
-};
+}

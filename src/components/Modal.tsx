@@ -3,7 +3,7 @@ import { DetailedHTMLProps, HTMLAttributes } from "react";
 interface Props
   extends DetailedHTMLProps<HTMLAttributes<HTMLDivElement>, HTMLDivElement> {}
 
-export default ({ children }: Props) => {
+const Modal = ({ children }: Props) => {
   return (
     <div
       className={
@@ -14,3 +14,4 @@ export default ({ children }: Props) => {
     </div>
   );
 };
+export default Modal;

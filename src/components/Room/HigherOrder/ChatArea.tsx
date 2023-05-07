@@ -1,5 +1,8 @@
 import { ReactNode } from "react";
 
-export default ({ children }: { children: ReactNode }) => {
-  return <section className={"relative flex flex-col grow"}>{children}</section>;
+const ChatArea = ({ children }: { children: ReactNode }) => {
+  return (
+    <section className={"relative flex flex-col grow"}>{children}</section>
+  );
 };
+export default ChatArea;

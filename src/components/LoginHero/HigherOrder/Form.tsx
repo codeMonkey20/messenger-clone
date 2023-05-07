@@ -6,7 +6,7 @@ interface Props
     HTMLFormElement
   > {}
 
-export default forwardRef<HTMLFormElement, Props>(
+const Form = forwardRef<HTMLFormElement, Props>(
   ({ children, ...props }: Props, ref) => {
     return (
       <form className={"lg:w-72 flex flex-col gap-3"} ref={ref} {...props}>
@@ -15,3 +15,4 @@ export default forwardRef<HTMLFormElement, Props>(
     );
   }
 );
+export default Form;

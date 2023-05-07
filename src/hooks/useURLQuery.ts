@@ -1,6 +1,9 @@
-import { useRouter } from "next/router"
+import { useRouter } from "next/router";
 
-export default (queryValue: string | number, key: string): boolean => {
+export default function useURLQuery(
+  queryValue: string | number,
+  key: string
+): boolean {
   const router = useRouter();
   const queries = router.query;
   return queries[key] === queryValue.toString();

@@ -2,11 +2,11 @@ import { useEffect, useRef } from "react";
 
 const DEFAULT_EVENTS = ["mousedown", "touchstart"];
 
-export default <T extends HTMLElement = any>(
+export default function useClickedOutside<T extends HTMLElement = any>(
   handler: () => void,
   events?: string[] | null,
   nodes?: (HTMLElement | null)[]
-) => {
+) {
   const ref = useRef<T>();
 
   useEffect(() => {
@@ -37,4 +37,4 @@ export default <T extends HTMLElement = any>(
   }, [ref, handler, nodes]);
 
   return ref;
-};
+}

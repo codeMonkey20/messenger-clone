@@ -50,7 +50,7 @@ import { Message } from "@/types/Messages";
 import ChatRow from "@/components/Room/HigherOrder/ChatRow";
 import { getHotkeyHandler } from "@/hooks/useHotkeyHandler";
 
-export default () => {
+export default function ChatRoom() {
   const router = useRouter();
   const { id } = router.query;
   const { data, status } = useSession();

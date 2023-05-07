@@ -1,5 +1,6 @@
 import { HTMLAttributes } from "react";
 
-export default ({ children }: HTMLAttributes<HTMLDivElement>) => {
+const Footer = ({ children }: HTMLAttributes<HTMLDivElement>) => {
   return <div>{children}</div>;
-}
+};
+export default Footer;

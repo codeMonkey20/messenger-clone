@@ -1,6 +1,6 @@
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef, useCallback } from "react";
 
-export default <T extends HTMLElement = HTMLDivElement>() => {
+export default function useHover<T extends HTMLElement = HTMLDivElement>() {
   const [hovered, setHovered] = useState(false);
   const ref = useRef<T>(null);
   const onMouseEnter = useCallback(() => setHovered(true), []);
@@ -8,12 +8,12 @@ export default <T extends HTMLElement = HTMLDivElement>() => {
 
   useEffect(() => {
     if (ref.current) {
-      ref.current.addEventListener('mouseenter', onMouseEnter);
-      ref.current.addEventListener('mouseleave', onMouseLeave);
+      ref.current.addEventListener("mouseenter", onMouseEnter);
+      ref.current.addEventListener("mouseleave", onMouseLeave);
 
       return () => {
-        ref.current?.removeEventListener('mouseenter', onMouseEnter);
-        ref.current?.removeEventListener('mouseleave', onMouseLeave);
+        ref.current?.removeEventListener("mouseenter", onMouseEnter);
+        ref.current?.removeEventListener("mouseleave", onMouseLeave);
       };
     }
 

@@ -6,10 +6,11 @@ interface Props {
   position: "top" | "mid" | "bot" | "all";
 }
 
-export default ({ children, position, self }: Props) => {
+const ChatBubble = ({ children, position, self }: Props) => {
   return (
-    <div className={`py-2 px-3 w-fit bubble-${position}${self ? "-self": ""}`}>
+    <div className={`py-2 px-3 w-fit bubble-${position}${self ? "-self" : ""}`}>
       <p className={"max-w-lg"}>{children}</p>
     </div>
   );
 };
+export default ChatBubble;

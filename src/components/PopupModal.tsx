@@ -15,7 +15,7 @@ export type ModalHandler = {
   toggle: () => void;
 };
 
-export default forwardRef<ModalHandler, Props>(({ children }, ref) => {
+const PopupModal = forwardRef<ModalHandler, Props>(({ children }, ref) => {
   const [visible, setVisible] = useState(false);
   const contentRef = useRef(null);
   const toggle = () => setVisible((state) => !state);
@@ -49,3 +49,4 @@ export default forwardRef<ModalHandler, Props>(({ children }, ref) => {
     );
   return <></>;
 });
+export default PopupModal;

@@ -1,10 +1,10 @@
 import { useState } from "react";
 
-export default <T>(
+export default function useValidatedState<T>(
   initialValue: T,
   validation: (value: T) => boolean,
   initialValidationState?: boolean
-) => {
+) {
   const [value, setValue] = useState<T>(initialValue);
   const [valid, setValid] = useState<boolean>(
     typeof initialValidationState === "boolean"
@@ -23,4 +23,4 @@ export default <T>(
   };
 
   return [{ value, valid }, onChange] as const;
-};
+}

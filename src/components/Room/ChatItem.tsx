@@ -9,7 +9,7 @@ interface Props {
   id: number | string;
 }
 
-export default ({ firstName, lastName, displayPicture, id }: Props) => {
+const ChatItem = ({ firstName, lastName, displayPicture, id }: Props) => {
   const isExactID: boolean = useURLQuery(id, "id");
   const active: string = isExactID ? "bg-muted/60" : "";
   return (
@@ -32,3 +32,4 @@ export default ({ firstName, lastName, displayPicture, id }: Props) => {
     </div>
   );
 };
+export default ChatItem;

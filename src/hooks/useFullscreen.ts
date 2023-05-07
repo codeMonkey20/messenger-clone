@@ -61,7 +61,7 @@ function addEvents(
   };
 }
 
-export default <T extends HTMLElement = any>() => {
+export default function useFullscreen<T extends HTMLElement = any>() {
   const [fullscreen, setFullscreen] = useState<boolean>(false);
 
   const _ref = useRef<T>();
@@ -120,4 +120,4 @@ export default <T extends HTMLElement = any>() => {
   }, []);
 
   return { ref, toggle, fullscreen } as const;
-};
+}

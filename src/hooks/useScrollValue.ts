@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 
-export default () => {
+export default function useScrollValue() {
   const [scroll, setScroll] = useState({ scrollY: 0, scrollX: 0 });
   useEffect(() => {
     window.addEventListener("scroll", () => {
@@ -8,4 +8,4 @@ export default () => {
     });
   }, []);
   return scroll;
-};
+}

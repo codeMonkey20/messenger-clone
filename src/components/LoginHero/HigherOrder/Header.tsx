@@ -1,7 +1,7 @@
 import useScrollValue from "@/hooks/useScrollValue";
 import { HTMLAttributes } from "react";
 
-export default ({ children }: HTMLAttributes<HTMLDivElement>) => {
+const Header = ({ children }: HTMLAttributes<HTMLDivElement>) => {
   const { scrollY } = useScrollValue();
   return (
     <header
@@ -14,3 +14,4 @@ export default ({ children }: HTMLAttributes<HTMLDivElement>) => {
     </header>
   );
 };
+export default Header;

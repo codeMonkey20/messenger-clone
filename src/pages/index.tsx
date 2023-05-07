@@ -43,7 +43,7 @@ export async function getServerSideProps(context: SSRContext) {
   };
 }
 
-export default ({ token }: SSRProps) => {
+export default function LandingPage({ token }: SSRProps) {
   const router = useRouter();
   const { error } = router.query;
   const signupRef = useRef<ModalHandler>(null);

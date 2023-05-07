@@ -1,7 +1,7 @@
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
 
-export default () => {
+const LoadingBar = () => {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
 
@@ -29,3 +29,4 @@ export default () => {
     />
   );
 };
+export default LoadingBar;

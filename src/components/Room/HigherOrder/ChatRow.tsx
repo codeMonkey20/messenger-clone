@@ -8,7 +8,7 @@ interface Props extends Attributes {
   self?: boolean;
 }
 
-export default ({ chatData, self }: Props) => {
+const ChatRow = ({ chatData, self }: Props) => {
   const { avatar, firstName, username, dateCreated, message } = chatData;
 
   return (
@@ -40,9 +40,12 @@ export default ({ chatData, self }: Props) => {
           className={"flex flex-col gap-[2px]"}
           style={{ alignItems: self ? "flex-end" : "flex-start" }}
         >
-          <ChatBubble position={"all"} self={self}>{message}</ChatBubble>
+          <ChatBubble position={"all"} self={self}>
+            {message}
+          </ChatBubble>
         </div>
       </div>
     </div>
   );
 };
+export default ChatRow;

@@ -1,6 +1,7 @@
-export default (string: string) => {
-  return string.replace(/\W+/g, " ")
+export default function snake(string: string) {
+  return string
+    .replace(/\W+/g, " ")
     .split(/ |\B(?=[A-Z])/)
-    .map(word => word.toLowerCase())
-    .join('_');
-};
+    .map((word) => word.toLowerCase())
+    .join("_");
+}

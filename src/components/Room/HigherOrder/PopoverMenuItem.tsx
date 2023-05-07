@@ -1,12 +1,17 @@
 import { ButtonHTMLAttributes, DetailedHTMLProps } from "react";
 
 interface Props
-  extends DetailedHTMLProps<ButtonHTMLAttributes<HTMLButtonElement>, HTMLButtonElement> {}
+  extends DetailedHTMLProps<
+    ButtonHTMLAttributes<HTMLButtonElement>,
+    HTMLButtonElement
+  > {}
 
-export default ({ children, onClick, ...props }: Props) => {
+const PopoverMenuItem = ({ children, onClick, ...props }: Props) => {
   return (
     <button
-      className={"flex gap-3 items-center px-3 py-2 rounded-md text-dark text-sm hover:bg-muted/60"}
+      className={
+        "flex gap-3 items-center px-3 py-2 rounded-md text-dark text-sm hover:bg-muted/60"
+      }
       onClick={onClick}
       {...props}
     >
@@ -14,3 +19,4 @@ export default ({ children, onClick, ...props }: Props) => {
     </button>
   );
 };
+export default PopoverMenuItem;
