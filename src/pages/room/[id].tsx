@@ -23,10 +23,7 @@ import {
   PopoverTrigger,
 } from "@/components/shadcn/popover";
 import useDebouncedState from "@/hooks/useDebouncedState";
-import {
-  useEffect,
-  useState,
-} from "react";
+import { useEffect, useState } from "react";
 import { User } from "@/types/User";
 import Link from "next/link";
 import snake from "@/lib/snake";
@@ -62,21 +59,21 @@ export default function ChatRoom() {
   const [messages, setMessages] = useState<Array<Message>>([
     {
       message: "hi there",
-      username: "juliardeeen",
+      username: "baka-test",
       firstName: "Bitch",
       avatar: "/gwapo_square.jpg",
       dateCreated: new Date(),
     },
     {
       message: "asdkfjghslkdfhjglksdjhf",
-      username: "juliardeeen",
+      username: "baka-test",
       firstName: "Bitch",
       avatar: "/gwapo_square.jpg",
       dateCreated: new Date(),
     },
     {
       message: "ulul",
-      username: "juliardeeen",
+      username: "baka-test",
       firstName: "Bitch",
       avatar: "/gwapo_square.jpg",
       dateCreated: new Date(),
@@ -84,15 +81,15 @@ export default function ChatRoom() {
     {
       message:
         "Lorem Ipsum has been the industry's standard dummy text ever since the 1500s",
-      username: "juliardactub",
-      firstName: "Juliard",
+      username: "baka-test",
+      firstName: "Bitch",
       avatar: "/gwapo_square.jpg",
       dateCreated: new Date(),
     },
     {
       message: "pakyu",
-      username: "juliardactub",
-      firstName: "Juliard",
+      username: "baka-test",
+      firstName: "Bitch",
       avatar: "/gwapo_square.jpg",
       dateCreated: new Date(),
     },
@@ -104,8 +101,8 @@ export default function ChatRoom() {
       const msg = [...messages];
       msg.unshift({
         message: trimmedMessage,
-        firstName: "Juliard",
-        username: "juliardactub",
+        firstName: userSession?.firstName || "",
+        username: userSession?.username || "",
         avatar: "",
         dateCreated: new Date(),
       });
@@ -293,7 +290,7 @@ export default function ChatRoom() {
                   <ChatRow
                     chatData={msg}
                     key={i}
-                    self={userSession?.email === msg.username}
+                    self={userSession?.username === msg.username}
                   />
                 );
               })}
@@ -363,4 +360,4 @@ export default function ChatRoom() {
         <Image src={"/logo.png"} alt="splash" width={80} height={80} />
       </main>
     );
-};
+}

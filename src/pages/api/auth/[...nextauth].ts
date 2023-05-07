@@ -46,7 +46,7 @@ export const authOptions: NextAuthOptions = {
       const { password, __v, ...user } = _doc;
       return {
         ...session,
-        // user,
+        user,
       };
     },
   },
