@@ -117,6 +117,7 @@ export default function useFullscreen<T extends HTMLElement = any>() {
     }
 
     return undefined;
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return { ref, toggle, fullscreen } as const;

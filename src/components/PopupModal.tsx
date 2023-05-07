@@ -49,4 +49,5 @@ const PopupModal = forwardRef<ModalHandler, Props>(({ children }, ref) => {
     );
   return <></>;
 });
+PopupModal.displayName = "PopupModal";
 export default PopupModal;

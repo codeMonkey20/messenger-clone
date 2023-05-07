@@ -8,16 +8,18 @@ export default function useHover<T extends HTMLElement = HTMLDivElement>() {
 
   useEffect(() => {
     if (ref.current) {
-      ref.current.addEventListener("mouseenter", onMouseEnter);
-      ref.current.addEventListener("mouseleave", onMouseLeave);
+      const currentRef = ref.current;
+      currentRef.addEventListener("mouseenter", onMouseEnter);
+      currentRef.addEventListener("mouseleave", onMouseLeave);
 
       return () => {
-        ref.current?.removeEventListener("mouseenter", onMouseEnter);
-        ref.current?.removeEventListener("mouseleave", onMouseLeave);
+        currentRef?.removeEventListener("mouseenter", onMouseEnter);
+        currentRef?.removeEventListener("mouseleave", onMouseLeave);
       };
     }
 
     return undefined;
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return { ref, hovered };

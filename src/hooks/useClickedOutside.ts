@@ -34,7 +34,7 @@ export default function useClickedOutside<T extends HTMLElement = any>(
         document.removeEventListener(fn, listener)
       );
     };
-  }, [ref, handler, nodes]);
+  }, [ref, handler, nodes, events]);
 
   return ref;
 }

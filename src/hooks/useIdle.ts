@@ -43,7 +43,7 @@ export default function useIdle(
         document.removeEventListener(event, handleEvents)
       );
     };
-  }, [timeout]);
+  }, [events, timeout]);
 
   return idle;
 }
