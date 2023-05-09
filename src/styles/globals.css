@@ -4,6 +4,7 @@
 
 @layer base {
   :root {
+    --font-sans: "";
     --dark: 0 0% 12.5%;
     --light: 0 0% 97.3%;
 
