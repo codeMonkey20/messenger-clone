@@ -3,5 +3,5 @@ export type Message = {
   username: string;
   firstName: string;
   avatar: string;
-  dateCreated: Date;
+  createdAt: Date;
 };

@@ -1,15 +1,8 @@
 import { signOut, useSession } from "next-auth/react";
 import { useRouter } from "next/router";
-import Head from "next/head";
 import Header from "@/components/Room/HigherOrder/Header";
 import { TbLogout, TbMessageCircle2Filled } from "react-icons/tb";
-import {
-  BsFiletypeGif,
-  BsImage,
-  BsPeopleFill,
-  BsSendFill,
-  BsThreeDots,
-} from "react-icons/bs";
+import { BsFiletypeGif, BsImage, BsPeopleFill, BsSendFill, BsThreeDots } from "react-icons/bs";
 import Image from "next/image";
 import ChatMenu from "@/components/Room/HigherOrder/ChatMenu";
 import Title from "@/components/Room/HigherOrder/Title";
@@ -17,11 +10,7 @@ import BoldText from "@/components/BoldText";
 import { MdAddCircle, MdOpenInNew } from "react-icons/md";
 import SearchBar from "@/components/Room/SearchBar";
 import ChatItem from "@/components/Room/ChatItem";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/shadcn/popover";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/shadcn/popover";
 import useDebouncedState from "@/hooks/useDebouncedState";
 import { useEffect, useState } from "react";
 import { User } from "@/types/User";
@@ -34,106 +23,181 @@ import ChatList from "@/components/Room/HigherOrder/ChatList";
 import ChatArea from "@/components/Room/HigherOrder/ChatArea";
 import ChatAreaHeader from "@/components/Room/HigherOrder/ChatAreaHeader";
 import { TiVideo } from "react-icons/ti";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/shadcn/tooltip";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/shadcn/tooltip";
 import ChatAreaConvo from "@/components/Room/HigherOrder/ChatAreaConvo";
 import ChatAreaInputs from "@/components/Room/HigherOrder/ChatAreaInputs";
 import ChatInput from "@/components/Room/ChatInput";
 import { Message } from "@/types/Messages";
-import ChatRow from "@/components/Room/HigherOrder/ChatRow";
+import ChatRow from "@/components/Room/ChatRow";
+import socket from "@/lib/socket";
 import { getHotkeyHandler } from "@/hooks/useHotkeyHandler";
+import { UserSession } from "@/types/UserSession";
+import axios from "axios";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/shadcn/avatar";
+import { Skeleton } from "@/components/shadcn/skeleton";
+import ChatListSkeleton from "@/components/Room/Skeleton/ChatListSkeleton";
+import Head from "next/head";
+import { MessagesDB } from "@/types/MessagesDB";
+import { Loader2 } from "lucide-react";
+import usePageFocus from "@/hooks/usePageFocus";
 
 export default function ChatRoom() {
   const router = useRouter();
   const { id } = router.query;
   const { data, status } = useSession();
-  const userSession = data?.user;
+  const emptyUserSession: UserSession = {
+    _id: "",
+    firstName: "",
+    lastName: "",
+    username: "",
+    avatar: "",
+  };
+  const userSession = data?.user ? data?.user : emptyUserSession;
 
   const [searchContacts, setSearchContacts] = useDebouncedState("", 300);
-  const [chatList, setChatList] = useState([]);
+  const [chatList, setChatList] = useState<User[]>([]);
   const [chatInput, setChatInput] = useState("");
-  const [messages, setMessages] = useState<Array<Message>>([
-    {
-      message: "hi there",
-      username: "baka-test",
-      firstName: "Bitch",
-      avatar: "/gwapo_square.jpg",
-      dateCreated: new Date(),
-    },
-    {
-      message: "asdkfjghslkdfhjglksdjhf",
-      username: "baka-test",
-      firstName: "Bitch",
-      avatar: "/gwapo_square.jpg",
-      dateCreated: new Date(),
-    },
-    {
-      message: "ulul",
-      username: "baka-test",
-      firstName: "Bitch",
-      avatar: "/gwapo_square.jpg",
-      dateCreated: new Date(),
-    },
-    {
-      message:
-        "Lorem Ipsum has been the industry's standard dummy text ever since the 1500s",
-      username: "baka-test",
-      firstName: "Bitch",
-      avatar: "/gwapo_square.jpg",
-      dateCreated: new Date(),
-    },
-    {
-      message: "pakyu",
-      username: "baka-test",
-      firstName: "Bitch",
-      avatar: "/gwapo_square.jpg",
-      dateCreated: new Date(),
-    },
-  ]);
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [socketConnected, setSocketConnected] = useState(socket.connected);
+  const [selectedUser, setSelectedUser] = useState<User>({});
+  const [isSomeoneTyping, setIsSomeoneTyping] = useState(false);
+  const [messagesLoad, setMessagesLoad] = useState(false);
+  const [receiverDetails, setReceiverDetails] = useState<User>({});
+  const isFocused = usePageFocus();
 
-  const handleSendMessage = () => {
+  const onSendMessage = () => {
     const trimmedMessage = chatInput.trim();
-    if (trimmedMessage) {
-      const msg = [...messages];
-      msg.unshift({
+    if (trimmedMessage && socketConnected && status === "authenticated") {
+      // trigger server message handle
+      socket.emit("send", { message: trimmedMessage, to: selectedUser.socketID });
+
+      // store to database
+      const messageJSON: MessagesDB = {
         message: trimmedMessage,
-        firstName: userSession?.firstName || "",
-        username: userSession?.username || "",
-        avatar: "",
-        dateCreated: new Date(),
+        toUserID: Array.isArray(id) ? "" : id ? id : "",
+        fromUserID: userSession._id,
+        fromUserUsername: userSession.username,
+        fromUserFirstName: userSession.firstName,
+        fromUserAvatar: userSession.avatar,
+      };
+      axios.post("/api/message/create", messageJSON);
+
+      // update chat convo
+      setMessages((messages) => {
+        const newMessage = {
+          message: trimmedMessage,
+          firstName: userSession.firstName,
+          username: userSession.username,
+          avatar: userSession.avatar,
+          createdAt: new Date(),
+        };
+        return [newMessage, ...messages];
       });
-      setMessages(msg);
+      setChatInput("");
     }
-    setChatInput("");
   };
 
-  useEffect(() => {
-    fetch("https://dummyjson.com/users")
-      .then((res) => res.json())
-      .then((res) => {
-        setChatList(res?.users);
-        // console.log(res?.users);
+  const onConnect = () => {
+    setSocketConnected(true);
+
+    // update users list when someone's online
+    socket.on("online", async () => {
+      const allUsersResponse = await axios.get("/api/user");
+      const allUsers: User[] = allUsersResponse.data;
+      setChatList(allUsers);
+    });
+
+    // someone's typing
+    socket.on("typing", (socketDetails) => {
+      if (socketDetails.message) setIsSomeoneTyping(true);
+      else setIsSomeoneTyping(false);
+      setReceiverDetails({
+        socketID: socketDetails.fromSocketID,
+        username: socketDetails.fromUserName,
+        _id: socketDetails.fromUserID,
       });
+    });
+
+    // display received messages
+    socket.on("send", ({ message, fromUserName, fromFirstName, fromAvatar }) => {
+      setIsSomeoneTyping(false);
+      setMessages((oldMessages) => {
+        const newMessage = {
+          message,
+          firstName: fromFirstName,
+          username: fromUserName,
+          avatar: fromAvatar,
+          createdAt: new Date(),
+        };
+        return [newMessage, ...oldMessages];
+      });
+    });
+  };
+
+  const onDisconnect = () => {
+    setSocketConnected(false);
+  };
+
+  // useEffect main init
+  useEffect(() => {
+    return () => {
+      socket.disconnect();
+      socket.off("connect", onConnect);
+      socket.off("disconnect", onDisconnect);
+    };
   }, []);
 
+  // on after authentication but before socket connection
   useEffect(() => {
-    fetch(`https://dummyjson.com/users/search?q=${snake(searchContacts)}`)
-      .then((res) => res.json())
-      .then((res) => {
-        setChatList(res?.users);
-        // console.log(res?.users);
+    if (status === "authenticated" && !socketConnected) {
+      socket.on("connect", onConnect);
+      socket.on("disconnect", onDisconnect);
+      socket.auth = { ...userSession };
+      socket.connect();
+    }
+  }, [status, userSession, socketConnected]);
+
+  // on socket connection
+  useEffect(() => {
+    if (socketConnected) {
+      axios.get(`/api/user`).then(({ data }) => setChatList(data));
+    }
+  }, [socketConnected]);
+
+  // on chatlist is updated or on change user
+  useEffect(() => {
+    setSelectedUser(chatList.filter((user) => user._id === id)[0]);
+    if (userSession._id && id) {
+      setMessagesLoad(true);
+      axios.get(`/api/messages?fromUserID=${userSession._id}&toUserID=${id}`).then(({ data }) => {
+        const newMessages: Message[] = data.map((messageData: MessagesDB) => {
+          const newMessage: Message = {
+            message: messageData.message,
+            username: messageData.fromUserUsername,
+            firstName: messageData.fromUserFirstName,
+            avatar: messageData.fromUserAvatar,
+            createdAt: new Date(messageData.createdAt ? messageData.createdAt : ""),
+          };
+          return newMessage;
+        });
+        setMessages(newMessages);
+        setMessagesLoad(false);
       });
-  }, [searchContacts]);
+    }
+  }, [chatList, id, userSession]);
+
+  // on typing
+  useEffect(() => {
+    if (selectedUser) {
+      socket.emit("typing", { to: selectedUser.socketID, message: chatInput });
+    }
+  }, [chatInput, selectedUser]);
 
   if (status === "authenticated")
     return (
       <>
         <Head>
-          <title>Messenger</title>
+          <title>{isFocused ? "focused": "unfocused"}</title>
         </Head>
         <LoadingBar />
         <main className={"flex h-screen"}>
@@ -143,14 +207,8 @@ export default function ChatRoom() {
                 <TooltipProvider>
                   <Tooltip>
                     <TooltipTrigger>
-                      <div
-                        className={
-                          "w-full h-12 p-3 hover:bg-gray-100 rounded-lg"
-                        }
-                      >
-                        <TbMessageCircle2Filled
-                          className={"w-full h-full text-black/80"}
-                        />
+                      <div className={"w-full h-12 p-3 hover:bg-gray-100 rounded-lg"}>
+                        <TbMessageCircle2Filled className={"w-full h-full text-black/80"} />
                       </div>
                     </TooltipTrigger>
                     <TooltipContent>
@@ -161,14 +219,8 @@ export default function ChatRoom() {
                 <TooltipProvider>
                   <Tooltip>
                     <TooltipTrigger>
-                      <div
-                        className={
-                          "w-full h-12 p-3 hover:bg-gray-100 rounded-lg"
-                        }
-                      >
-                        <BsPeopleFill
-                          className={"w-full h-full text-black/80"}
-                        />
+                      <div className={"w-full h-12 p-3 hover:bg-gray-100 rounded-lg"}>
+                        <BsPeopleFill className={"w-full h-full text-black/80"} />
                       </div>
                     </TooltipTrigger>
                     <TooltipContent>
@@ -180,13 +232,7 @@ export default function ChatRoom() {
               <Popover>
                 <PopoverTrigger>
                   <div className={"table mx-auto"}>
-                    <Image
-                      src={"/gwapo_square.jpg"}
-                      className={"rounded-full"}
-                      alt={"dp"}
-                      width={34}
-                      height={34}
-                    />
+                    <Image src={"/gwapo_square.jpg"} className={"rounded-full"} alt={"dp"} width={34} height={34} />
                   </div>
                 </PopoverTrigger>
                 <PopoverContent className={"p-1"}>
@@ -195,9 +241,7 @@ export default function ChatRoom() {
                       <IoIosSettings className={"text-lg"} />
                       Settings
                     </PopoverMenuItem>
-                    <PopoverMenuItem
-                      onClick={() => signOut({ callbackUrl: "/" })}
-                    >
+                    <PopoverMenuItem onClick={() => signOut({ callbackUrl: "/" })}>
                       <TbLogout className={"text-lg"} />
                       Log out
                     </PopoverMenuItem>
@@ -214,44 +258,60 @@ export default function ChatRoom() {
               </div>
             </Title>
             <div className={"mx-2 h-10"}>
-              <SearchBar
-                defaultValue={searchContacts}
-                onChange={(e) => setSearchContacts(e.target.value)}
-              />
+              <SearchBar defaultValue={searchContacts} onChange={(e) => setSearchContacts(e.target.value)} />
             </div>
             <ChatList>
-              {chatList.map(({ id, firstName, lastName, image }: User) => (
-                <Link key={id} href={`/room/${id}`} replace>
-                  <ChatItem
-                    key={id}
-                    id={id}
-                    firstName={firstName}
-                    lastName={lastName}
-                    displayPicture={image}
-                  />
-                </Link>
-              ))}
+              {selectedUser ? (
+                chatList.map(({ _id, firstName, lastName, avatar, online }: User) => {
+                  if (chatList.length > 0)
+                    return (
+                      <Link key={_id} href={`/room/${_id}`} replace>
+                        <ChatItem
+                          key={_id}
+                          id={_id ? _id : ""}
+                          firstName={firstName ? firstName : ""}
+                          lastName={lastName ? lastName : ""}
+                          displayPicture={avatar ? avatar : ""}
+                          online={online === true}
+                          lastMessage={"Send Nudes"}
+                          typing={isSomeoneTyping}
+                          receiverDetails={receiverDetails}
+                        />
+                      </Link>
+                    );
+                })
+              ) : (
+                <ChatListSkeleton />
+              )}
             </ChatList>
           </ChatMenu>
           <ChatArea>
             <ChatAreaHeader>
               <div className={"flex items-center gap-2"}>
-                <Image
-                  src={"/gwapo_square.jpg"}
-                  alt={"DP"}
-                  width={40}
-                  height={40}
-                  className={"rounded-full"}
-                />
-                Juliard Actub
+                <Avatar className="h-10 w-10">
+                  {selectedUser ? (
+                    <AvatarImage src={selectedUser.avatar ? selectedUser.avatar : "/Default_pfp.png"} />
+                  ) : (
+                    <Skeleton className="h-10 w-10 rounded-full" />
+                  )}
+                  <AvatarFallback>
+                    <Skeleton className="h-10 w-10 rounded-full" />
+                  </AvatarFallback>
+                </Avatar>
+                {selectedUser ? (
+                  `${selectedUser.firstName} ${selectedUser.lastName}`
+                ) : (
+                  <>
+                    <Skeleton className="h-5 w-10 rounded-full" />
+                    <Skeleton className="h-5 w-20 rounded-full" />
+                  </>
+                )}
               </div>
               <div className={"flex items-center gap-4 text-primary text-4xl"}>
                 <TooltipProvider>
                   <Tooltip>
                     <TooltipTrigger>
-                      <IoIosCall
-                        className={"p-2 rounded-full hover:bg-muted/60"}
-                      />
+                      <IoIosCall className={"p-2 rounded-full hover:bg-muted/60"} />
                     </TooltipTrigger>
                     <TooltipContent>
                       <p className={"text-dark"}>Start a voice call</p>
@@ -261,9 +321,7 @@ export default function ChatRoom() {
                 <TooltipProvider>
                   <Tooltip>
                     <TooltipTrigger>
-                      <TiVideo
-                        className={"p-2 rounded-full hover:bg-muted/60"}
-                      />
+                      <TiVideo className={"p-2 rounded-full hover:bg-muted/60"} />
                     </TooltipTrigger>
                     <TooltipContent>
                       <p className={"text-dark"}>Start a video call</p>
@@ -273,9 +331,7 @@ export default function ChatRoom() {
                 <TooltipProvider>
                   <Tooltip>
                     <TooltipTrigger>
-                      <BsThreeDots
-                        className={"p-2 rounded-full hover:bg-muted/60"}
-                      />
+                      <BsThreeDots className={"p-2 rounded-full hover:bg-muted/60"} />
                     </TooltipTrigger>
                     <TooltipContent>
                       <p className={"text-dark"}>Conversation information</p>
@@ -285,15 +341,34 @@ export default function ChatRoom() {
               </div>
             </ChatAreaHeader>
             <ChatAreaConvo>
-              {messages.map((msg: Message, i: number) => {
-                return (
-                  <ChatRow
-                    chatData={msg}
-                    key={i}
-                    self={userSession?.username === msg.username}
-                  />
-                );
-              })}
+              {isSomeoneTyping && receiverDetails._id === id ? (
+                <div className="flex items-center gap-2 my-3">
+                  <Avatar className="h-10 w-10">
+                    {selectedUser ? (
+                      <AvatarImage src={selectedUser.avatar ? selectedUser.avatar : "/Default_pfp.png"} />
+                    ) : (
+                      <Skeleton className="h-10 w-10 rounded-full" />
+                    )}
+                    <AvatarFallback>
+                      <Skeleton className="h-10 w-10 rounded-full" />
+                    </AvatarFallback>
+                  </Avatar>
+                  <div className="w-[54px] h-10 rounded-full bg-muted/80 pt-4 pl-3">
+                    <div className="dot-typing"></div>
+                  </div>
+                </div>
+              ) : (
+                ""
+              )}
+              {messagesLoad ? (
+                <div className={"flex grow items-center justify-center"}>
+                  <Loader2 className="mr-2 h-8 w-8 text-primary animate-spin" />
+                </div>
+              ) : (
+                messages.map((msg: Message, i: number) => {
+                  return <ChatRow chatData={msg} key={i} self={userSession?.username === msg.username} />;
+                })
+              )}
             </ChatAreaConvo>
             <ChatAreaInputs>
               <TooltipProvider>
@@ -335,12 +410,12 @@ export default function ChatRoom() {
               <ChatInput
                 value={chatInput}
                 onChange={(e) => setChatInput(e.target.value)}
-                onKeyDown={getHotkeyHandler([["Enter", handleSendMessage]])}
+                onKeyDown={getHotkeyHandler([["Enter", onSendMessage]])}
               />
               <TooltipProvider>
                 <Tooltip>
                   <TooltipTrigger>
-                    <div className={"p-2 rounded-full hover:bg-muted/60"}>
+                    <div className={"p-2 rounded-full hover:bg-muted/60"} onClick={onSendMessage}>
                       <BsSendFill className={"text-lg"} />
                     </div>
                   </TooltipTrigger>
@@ -354,10 +429,9 @@ export default function ChatRoom() {
         </main>
       </>
     );
-  else
-    return (
-      <main className="w-screen h-screen flex justify-center items-center">
-        <Image src={"/logo.png"} alt="splash" width={80} height={80} />
-      </main>
-    );
+  return (
+    <main className="w-screen h-screen flex justify-center items-center">
+      <Image src={"/logo.png"} alt="splash" width={80} height={80} />
+    </main>
+  );
 }
