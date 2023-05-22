@@ -98,52 +98,49 @@ export default function ChatRoom() {
   };
 
   const onConnect = () => {
+    axios.get(`/api/user`).then(({ data }) => setChatList(data));
     setSocketConnected(true);
-
-    // update users list when someone's online
-    socket.on("online", async () => {
-      const allUsersResponse = await axios.get("/api/user");
-      const allUsers: User[] = allUsersResponse.data;
-      setChatList(allUsers);
-    });
-
-    // someone's typing
-    socket.on("typing", (socketDetails) => {
-      if (socketDetails.message) setIsSomeoneTyping(true);
-      else setIsSomeoneTyping(false);
-      setReceiverDetails({
-        socketID: socketDetails.fromSocketID,
-        username: socketDetails.fromUserName,
-        _id: socketDetails.fromUserID,
-      });
-    });
-
-    // display received messages
-    socket.on("send", ({ message, fromUserName, fromFirstName, fromAvatar }) => {
-      setIsSomeoneTyping(false);
-      setMessages((oldMessages) => {
-        const newMessage = {
-          message,
-          firstName: fromFirstName,
-          username: fromUserName,
-          avatar: fromAvatar,
-          createdAt: new Date(),
-        };
-        return [newMessage, ...oldMessages];
-      });
-    });
   };
 
   const onDisconnect = () => {
     setSocketConnected(false);
   };
 
+  const onOnline = async () => {
+    const allUsersResponse = await axios.get("/api/user");
+    const allUsers: User[] = allUsersResponse.data;
+    setChatList(allUsers);
+  };
+
+  const onTyping = (socketDetails: any) => {
+    if (socketDetails.message) setIsSomeoneTyping(true);
+    else setIsSomeoneTyping(false);
+    setReceiverDetails({
+      socketID: socketDetails.fromSocketID,
+      username: socketDetails.fromUserName,
+      _id: socketDetails.fromUserID,
+    });
+  };
+
+  const onSend = ({ message, fromUserName, fromFirstName, fromAvatar }: any) => {
+    setIsSomeoneTyping(false);
+    setMessages((oldMessages) => {
+      const newMessage = {
+        message,
+        firstName: fromFirstName,
+        username: fromUserName,
+        avatar: fromAvatar,
+        createdAt: new Date(),
+      };
+      return [newMessage, ...oldMessages];
+    });
+  };
+
   // useEffect main init
   useEffect(() => {
     return () => {
       socket.disconnect();
-      socket.off("connect", onConnect);
-      socket.off("disconnect", onDisconnect);
+      socket.removeAllListeners();
     };
   }, []);
 
@@ -152,17 +149,13 @@ export default function ChatRoom() {
     if (status === "authenticated" && !socketConnected) {
       socket.on("connect", onConnect);
       socket.on("disconnect", onDisconnect);
+      socket.on("online", onOnline);
+      socket.on("typing", onTyping);
+      socket.on("send", onSend);
       socket.auth = { ...userSession };
       socket.connect();
     }
   }, [status, userSession, socketConnected]);
-
-  // on socket connection
-  useEffect(() => {
-    if (socketConnected) {
-      axios.get(`/api/user`).then(({ data }) => setChatList(data));
-    }
-  }, [socketConnected]);
 
   // on chatlist is updated or on change user
   useEffect(() => {
@@ -196,9 +189,6 @@ export default function ChatRoom() {
   if (status === "authenticated")
     return (
       <>
-        <Head>
-          <title>{isFocused ? "focused": "unfocused"}</title>
-        </Head>
         <LoadingBar />
         <main className={"flex h-screen"}>
           <Header>
