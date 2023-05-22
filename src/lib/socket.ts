@@ -7,7 +7,7 @@ const socket = io(socketURL, {
   secure: true,
   rejectUnauthorized: false,
   extraHeaders: {
-    "Access-Control-Allow-Origin": "*",
+    "Access-Control-Allow-Origin": "https://messenger-clone-socket.herokuapp.com",
   },
 });
 export default socket;
