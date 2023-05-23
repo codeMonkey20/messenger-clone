@@ -12,18 +12,11 @@ export const authOptions: NextAuthOptions = {
         password: { label: "Password", type: "password" },
       },
       async authorize(credentials) {
-        const username = credentials?.username
-          ? credentials?.username
-          : "";
-        const password = credentials?.password
-          ? credentials?.password
-          : "";
+        const username = credentials?.username ? credentials?.username : "";
+        const password = credentials?.password ? credentials?.password : "";
         const user = await User.findOne({ username });
         if (!user) return null;
-        const isPasswordMatch = await bcrypt.compare(
-          password,
-          user.password
-        );
+        const isPasswordMatch = await bcrypt.compare(password, user.password);
 
         if (isPasswordMatch) {
           return {

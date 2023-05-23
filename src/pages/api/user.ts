@@ -11,7 +11,7 @@ type User = {
   socketID?: string;
 };
 
-const userAttributes = ["_id", "username", "online", "password", "firstName", "lastName", "socketID"];
+const userAttributes = ["_id", "username", "online", "password", "firstName", "lastName", "socketID", "withPassword"];
 
 export default async function getUserByCriteria(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== "GET") {
@@ -27,11 +27,16 @@ export default async function getUserByCriteria(req: NextApiRequest, res: NextAp
     }
   }
 
-  const allUsers = await User.find(req.query);
-  const allUsersWithoutPassword: User[] = [];
-  allUsers.forEach(({ _id, online, username, firstName, lastName, socketID }: User) => {
-    allUsersWithoutPassword.push({ _id, online, username, firstName, lastName, socketID });
-  });
-  res.status(200).json(allUsersWithoutPassword);
+  const { withPassword, ...userQueries } = req.query;
+  const allUsers = await User.find(userQueries);
+  if (withPassword === "false" || withPassword === undefined) {
+    const allUsersWithoutPassword: User[] = [];
+    allUsers.forEach(({ _id, online, username, firstName, lastName, socketID }: User) => {
+      allUsersWithoutPassword.push({ _id, online, username, firstName, lastName, socketID });
+    });
+    res.status(200).json(allUsersWithoutPassword);
+  } else {
+    res.status(200).json(allUsers);
+  }
   res.end();
 }

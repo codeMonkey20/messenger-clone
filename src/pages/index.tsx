@@ -7,7 +7,7 @@ import HeaderText from "@/components/LoginHero/HeaderText";
 import Form from "@/components/LoginHero/HigherOrder/Form";
 import FormText from "@/components/FormText";
 import Image from "next/dist/client/image";
-import { InferGetServerSidePropsType as SSRPropsType, GetServerSidePropsContext as SSRContext } from "next";
+import { GetServerSidePropsContext as SSRContext } from "next";
 import { getServerSession } from "next-auth";
 import { getCsrfToken, signIn } from "next-auth/react";
 import { authOptions } from "@/pages/api/auth/[...nextauth]";
@@ -23,10 +23,8 @@ import { Input } from "@/components/shadcn/input";
 import camel from "@/lib/camel";
 import axios from "axios";
 
-interface SSRProps extends SSRPropsType<typeof getServerSideProps> {}
-
-export async function getServerSideProps(context: SSRContext) {
-  const session = await getServerSession(context.req, context.res, authOptions);
+export async function getServerSideProps({ req, res }: SSRContext) {
+  const session = await getServerSession(req, res, authOptions);
   if (session) {
     return {
       redirect: {
@@ -36,19 +34,20 @@ export async function getServerSideProps(context: SSRContext) {
     };
   }
   return {
-    props: {
-      token: await getCsrfToken(context),
-    },
+    props: {},
   };
 }
 
-export default function LandingPage({ token }: SSRProps) {
+export default function LandingPage() {
   const router = useRouter();
   const { error } = router.query;
   const signupRef = useRef<ModalHandler>(null);
   const formElement = useRef<HTMLFormElement>(null);
+  const formLoginElement = useRef<HTMLFormElement>(null);
   const file = useRef<HTMLInputElement>(null);
   const [buttonLoad, setButtonLoad] = useState(false);
+  const [loginError, setLoginError] = useState(false);
+  const [signupError, setSignupError] = useState(false);
 
   const handleSignup = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -58,8 +57,8 @@ export default function LandingPage({ token }: SSRProps) {
     formData.append("avatar", "");
     formData.append("socketID", "");
     const formDataJSON = Object.fromEntries(formData.entries());
-    const newUserResponse = await axios.post("/api/user/create", formDataJSON);
-    const newUser = newUserResponse.data;
+    const { data } = await axios.post("/api/user/create", formDataJSON);
+    const newUser = data;
     if (newUser.data) {
       const { username, _id } = newUser.data;
       signIn("credentials", {
@@ -68,9 +67,41 @@ export default function LandingPage({ token }: SSRProps) {
         callbackUrl: `/room/${_id}`,
       });
     } else {
-      router.replace(`/?error=${camel(newUser.error)}`);
+      setSignupError(true);
       setButtonLoad(false);
     }
+  };
+
+  const handleSignIn = async (e: FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    if (!formLoginElement.current) return;
+
+    setButtonLoad(true);
+    const formData = new FormData(formLoginElement.current);
+    const formDataJSON = Object.fromEntries(formData.entries());
+    const inputUsername = typeof formDataJSON.username === "string" ? formDataJSON.username : "";
+    const inputPassword = typeof formDataJSON.password === "string" ? formDataJSON.password : "";
+    const { data } = await axios.get(`/api/user?username=${inputUsername}&withPassword=true`);
+    if (data.length === 0) {
+      setLoginError(true);
+      setButtonLoad(false);
+      return;
+    }
+
+    const user = data[0];
+    const hashCompareResponse = await axios.post("/api/hashCompare", { content: inputPassword, hash: user.password });
+    const isPasswordMatch = hashCompareResponse.data.match;
+    if (!isPasswordMatch) {
+      setLoginError(true);
+      setButtonLoad(false);
+      return;
+    }
+
+    signIn("credentials", {
+      username: inputUsername,
+      password: inputPassword,
+      callbackUrl: `/room/${user._id}`,
+    });
   };
 
   return (
@@ -86,7 +117,7 @@ export default function LandingPage({ token }: SSRProps) {
             >
               <SemiboldText className={"text-2xl tracking-tighter text-black/80"}>Join Messenger Today</SemiboldText>
               <Form ref={formElement} onSubmit={handleSignup}>
-                {error && signupRef.current?.visible ? <span className={"text-red-500"}>Username exists</span> : ""}
+                {signupError ? <span className={"text-red-500"}>Username exists</span> : ""}
                 <FormText placeholder={"Username"} name={"username"} required />
                 <FormText placeholder={"First Name"} name={"firstName"} />
                 <FormText placeholder={"Last Name"} name={"lastName"} />
@@ -126,13 +157,8 @@ export default function LandingPage({ token }: SSRProps) {
                   Messenger makes it easy and fun to stay close to your favorite people.
                 </text>
               </div>
-              <Form method={"post"} action={"/api/auth/callback/credentials"}>
-                <input name="csrfToken" type="hidden" defaultValue={token} />
-                {error && !signupRef.current?.visible ? (
-                  <span className={"text-red-500"}>Incorrect username or password</span>
-                ) : (
-                  ""
-                )}
+              <Form ref={formLoginElement} onSubmit={handleSignIn}>
+                {loginError ? <span className={"text-red-500"}>Incorrect username or password</span> : <></>}
                 <FormText placeholder={"Username"} name={"username"} required />
                 <FormPass placeholder={"Password"} name={"password"} required />
                 <div className={"flex items-center gap-4 mt-5"}>
