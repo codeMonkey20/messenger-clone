@@ -5,10 +5,6 @@ const socketURL =
 const socket = io(socketURL, {
   autoConnect: false,
   forceNew: true,
-  secure: true,
-  rejectUnauthorized: false,
-  extraHeaders: {
-    "Access-Control-Allow-Origin": "*",
-  },
+  withCredentials: true,
 });
 export default socket;
