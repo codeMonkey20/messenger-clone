@@ -162,7 +162,9 @@ export default function LandingPage() {
                 <FormText placeholder={"Username"} name={"username"} required />
                 <FormPass placeholder={"Password"} name={"password"} required />
                 <div className={"flex items-center gap-4 mt-5"}>
-                  <Button className={"font-bold rounded-full px-7 py-6"}>Login</Button>
+                  <Button className={"font-bold rounded-full px-7 py-6"} disabled={buttonLoad}>
+                    {buttonLoad ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : ""}Login
+                  </Button>
                   <Button type={"button"} variant={"link"} onClick={() => signupRef.current?.toggle()}>
                     Signup
                   </Button>
