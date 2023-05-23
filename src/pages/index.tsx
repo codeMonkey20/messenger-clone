@@ -1,28 +1,27 @@
 import BoldText from "@/components/BoldText";
 import FormPass from "@/components/FormPass";
-import PrimaryButton from "@/components/PrimaryButton";
-import PrimaryText from "@/components/PrimaryText";
 import HigherOrderContent from "@/components/LoginHero/HigherOrder/HigherOrderContent";
 import Header from "@/components/LoginHero/HigherOrder/Header";
 import Content from "@/components/LoginHero/HigherOrder/Content";
 import HeaderText from "@/components/LoginHero/HeaderText";
 import Form from "@/components/LoginHero/HigherOrder/Form";
-import Footer from "@/components/LoginHero/HigherOrder/Footer";
 import FormText from "@/components/FormText";
 import Image from "next/dist/client/image";
-import {
-  InferGetServerSidePropsType as SSRPropsType,
-  GetServerSidePropsContext as SSRContext,
-} from "next";
+import { InferGetServerSidePropsType as SSRPropsType, GetServerSidePropsContext as SSRContext } from "next";
 import { getServerSession } from "next-auth";
 import { getCsrfToken, signIn } from "next-auth/react";
 import { authOptions } from "@/pages/api/auth/[...nextauth]";
-import { FormEvent, useRef } from "react";
+import { FormEvent, useRef, useState } from "react";
 import { useRouter } from "next/router";
 import PopupModal, { ModalHandler } from "@/components/PopupModal";
 import SemiboldText from "@/components/SemiboldText";
-import Head from "next/head";
 import LoadingBar from "@/components/LoadingBar";
+import { Button } from "@/components/shadcn/button";
+import { Loader2 } from "lucide-react";
+import { Label } from "@/components/shadcn/label";
+import { Input } from "@/components/shadcn/input";
+import camel from "@/lib/camel";
+import axios from "axios";
 
 interface SSRProps extends SSRPropsType<typeof getServerSideProps> {}
 
@@ -31,7 +30,7 @@ export async function getServerSideProps(context: SSRContext) {
   if (session) {
     return {
       redirect: {
-        destination: "/room/1",
+        destination: `/room/${session.user._id}`,
         permanent: false,
       },
     };
@@ -48,35 +47,34 @@ export default function LandingPage({ token }: SSRProps) {
   const { error } = router.query;
   const signupRef = useRef<ModalHandler>(null);
   const formElement = useRef<HTMLFormElement>(null);
+  const file = useRef<HTMLInputElement>(null);
+  const [buttonLoad, setButtonLoad] = useState(false);
 
-  const handleLogin = async (e: FormEvent<HTMLFormElement>) => {
+  const handleSignup = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (!formElement.current) return;
-
+    setButtonLoad(true);
     const formData = new FormData(formElement.current);
+    formData.append("avatar", "");
+    formData.append("socketID", "");
     const formDataJSON = Object.fromEntries(formData.entries());
-    const formDataString = JSON.stringify(formDataJSON);
-    const res = await fetch("/api/user", {
-      method: "POST",
-      body: formDataString,
-    });
-    const resJSON = await res.json();
-    if (resJSON.data) {
+    const newUserResponse = await axios.post("/api/user/create", formDataJSON);
+    const newUser = newUserResponse.data;
+    if (newUser.data) {
+      const { username, _id } = newUser.data;
       signIn("credentials", {
-        username: formDataJSON?.username,
-        password: formDataJSON?.password,
-        callbackUrl: "/",
+        username,
+        password: formDataJSON.password,
+        callbackUrl: `/room/${_id}`,
       });
     } else {
-      // error handling
+      router.replace(`/?error=${camel(newUser.error)}`);
+      setButtonLoad(false);
     }
   };
 
   return (
     <>
-      <Head>
-        <title>Messenger</title>
-      </Head>
       <LoadingBar />
       <main className={"flex justify-center"}>
         <PopupModal ref={signupRef}>
@@ -86,19 +84,22 @@ export default function LandingPage({ token }: SSRProps) {
                 "flex flex-col gap-8 w-4/5 sm:w-auto sm:relative sm:bg-white sm:px-20 sm:py-16 lg:px-28 lg:py-24 sm:rounded-xl sm:shadow-lg"
               }
             >
-              <SemiboldText
-                className={"text-2xl tracking-tighter text-black/80"}
-              >
-                Join Messenger Today
-              </SemiboldText>
-              <Form ref={formElement} onSubmit={handleLogin}>
+              <SemiboldText className={"text-2xl tracking-tighter text-black/80"}>Join Messenger Today</SemiboldText>
+              <Form ref={formElement} onSubmit={handleSignup}>
+                {error && signupRef.current?.visible ? <span className={"text-red-500"}>Username exists</span> : ""}
                 <FormText placeholder={"Username"} name={"username"} required />
                 <FormText placeholder={"First Name"} name={"firstName"} />
                 <FormText placeholder={"Last Name"} name={"lastName"} />
-
                 <FormPass placeholder={"Password"} name={"password"} required />
+                <div className="grid w-full max-w-sm items-center gap-1.5">
+                  <Label htmlFor="picture">Avatar</Label>
+                  <Input ref={file} id="picture" type="file" />
+                </div>
                 <div className={"mt-5"}>
-                  <PrimaryButton type={"submit"}>Create Account</PrimaryButton>
+                  <Button className="rounded-full font-bold p-6" disabled={buttonLoad}>
+                    {buttonLoad ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : ""}
+                    Create Account
+                  </Button>
                 </div>
               </Form>
             </div>
@@ -122,46 +123,32 @@ export default function LandingPage({ token }: SSRProps) {
                   anytime, anywhere
                 </HeaderText>
                 <text className="text-gray-500 leading-6 text-lg text-center lg:text-left">
-                  Messenger makes it easy and fun to stay close to your favorite
-                  people.
+                  Messenger makes it easy and fun to stay close to your favorite people.
                 </text>
               </div>
               <Form method={"post"} action={"/api/auth/callback/credentials"}>
                 <input name="csrfToken" type="hidden" defaultValue={token} />
-                <span className={"text-red-500"}>
-                  {error ? "Incorrect username or password" : ""}
-                </span>
+                {error && !signupRef.current?.visible ? (
+                  <span className={"text-red-500"}>Incorrect username or password</span>
+                ) : (
+                  ""
+                )}
                 <FormText placeholder={"Username"} name={"username"} required />
                 <FormPass placeholder={"Password"} name={"password"} required />
                 <div className={"flex items-center gap-4 mt-5"}>
-                  <PrimaryButton type={"submit"}>Login</PrimaryButton>
-                  <button
-                    type={"button"}
-                    onClick={() => signupRef.current?.toggle()}
-                  >
-                    <PrimaryText
-                      className={
-                        "underline cursor-pointer font-semibold text-sm"
-                      }
-                    >
-                      Signup
-                    </PrimaryText>
-                  </button>
+                  <Button className={"font-bold rounded-full px-7 py-6"}>Login</Button>
+                  <Button type={"button"} variant={"link"} onClick={() => signupRef.current?.toggle()}>
+                    Signup
+                  </Button>
                 </div>
               </Form>
             </div>
             <div style={{ maxWidth: 600 }}>
-              <Image
-                src={"/hero.png"}
-                alt={"hero"}
-                width={1362}
-                height={1436}
-              />
+              <Image src={"/hero.png"} alt={"hero"} width={1362} height={1436} />
             </div>
           </Content>
-          <Footer></Footer>
         </HigherOrderContent>
       </main>
     </>
   );
-};
+}

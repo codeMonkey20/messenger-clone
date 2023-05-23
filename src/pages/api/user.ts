@@ -1,45 +1,37 @@
 import User from "@/models/User";
 import type { NextApiRequest, NextApiResponse } from "next";
-import bcrypt from "bcrypt";
 
-export default async function UserHandler(
-  req: NextApiRequest,
-  res: NextApiResponse
-) {
-  switch (req.method) {
-    // create user
-    case "POST":
-      const { username, password, firstName, lastName } =
-        typeof req.body === "string" ? JSON.parse(req.body) : req.body;
-      if (!username && !password)
-        res.status(400).json({ error: "Invalid username/pasword" });
-      const user = await User.findOne({ username });
-      if (user) res.status(409).json({ error: "Username exists" });
-      const hash = await bcrypt.hash(password, 10);
-      const newUser = await User.create({
-        username,
-        password: hash,
-        firstName,
-        lastName,
-      });
-      res.status(200).json({ message: "User added", data: newUser });
-      break;
+type User = {
+  _id: string;
+  username: string;
+  online: boolean;
+  password?: string;
+  firstName?: string;
+  lastName?: string;
+  socketID?: string;
+};
 
-    // show user
-    case "GET":
-      break;
+const userAttributes = ["_id", "username", "online", "password", "firstName", "lastName", "socketID"];
 
-    // update user
-    case "PUT":
-      break;
-
-    // delete user
-    case "DELETE":
-      break;
-
-    default:
-      res.status(405).json({ error: "Method Not Allowed" });
-      break;
+export default async function getUserByCriteria(req: NextApiRequest, res: NextApiResponse) {
+  if (req.method !== "GET") {
+    res.status(405).json({ error: "Method Not Allowed" });
+    return;
   }
+
+  if (Object.keys(req.query).length > 0) {
+    const queryKeys = Object.keys(req.query);
+    if (!queryKeys.some((query) => userAttributes.includes(query))) {
+      res.status(400).json({ error: "Invalid Query Parameters" });
+      return;
+    }
+  }
+
+  const allUsers = await User.find(req.query);
+  const allUsersWithoutPassword: User[] = [];
+  allUsers.forEach(({ _id, online, username, firstName, lastName, socketID }: User) => {
+    allUsersWithoutPassword.push({ _id, online, username, firstName, lastName, socketID });
+  });
+  res.status(200).json(allUsersWithoutPassword);
   res.end();
 }
