@@ -41,7 +41,7 @@ const PopupModal = forwardRef<ModalHandler, Props>(({ children }, ref) => {
   if (visible)
     return (
       <div
-        className={`absolute z-50 top-0 left-0 w-screen h-screen bg-white sm:bg-transparent sm:backdrop-blur-sm  sm:flex sm:items-center sm:justify-center`}
+        className={`fixed z-50 top-0 left-0 w-screen h-screen bg-white sm:bg-transparent sm:backdrop-blur-sm  sm:flex sm:items-center sm:justify-center`}
         ref={contentRef}
       >
         <div>{children}</div>

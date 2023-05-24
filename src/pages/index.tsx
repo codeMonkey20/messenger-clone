@@ -9,10 +9,9 @@ import FormText from "@/components/FormText";
 import Image from "next/dist/client/image";
 import { GetServerSidePropsContext as SSRContext } from "next";
 import { getServerSession } from "next-auth";
-import { getCsrfToken, signIn } from "next-auth/react";
+import { signIn } from "next-auth/react";
 import { authOptions } from "@/pages/api/auth/[...nextauth]";
 import { FormEvent, useRef, useState } from "react";
-import { useRouter } from "next/router";
 import PopupModal, { ModalHandler } from "@/components/PopupModal";
 import SemiboldText from "@/components/SemiboldText";
 import LoadingBar from "@/components/LoadingBar";
@@ -20,8 +19,8 @@ import { Button } from "@/components/shadcn/button";
 import { Loader2 } from "lucide-react";
 import { Label } from "@/components/shadcn/label";
 import { Input } from "@/components/shadcn/input";
-import camel from "@/lib/camel";
 import axios from "axios";
+import { IoMdClose } from "react-icons/io";
 
 export async function getServerSideProps({ req, res }: SSRContext) {
   const session = await getServerSession(req, res, authOptions);
@@ -39,8 +38,6 @@ export async function getServerSideProps({ req, res }: SSRContext) {
 }
 
 export default function LandingPage() {
-  const router = useRouter();
-  const { error } = router.query;
   const signupRef = useRef<ModalHandler>(null);
   const formElement = useRef<HTMLFormElement>(null);
   const formLoginElement = useRef<HTMLFormElement>(null);
@@ -109,7 +106,8 @@ export default function LandingPage() {
       <LoadingBar />
       <main className={"flex justify-center"}>
         <PopupModal ref={signupRef}>
-          <div className={"flex items-center justify-center h-full"}>
+          <div className={"relative flex items-center justify-center h-screen sm:h-full"}>
+            <IoMdClose className={"absolute left-6 top-6 text-2xl"} onClick={() => signupRef.current?.toggle()} />
             <div
               className={
                 "flex flex-col gap-8 w-4/5 sm:w-auto sm:relative sm:bg-white sm:px-20 sm:py-16 lg:px-28 lg:py-24 sm:rounded-xl sm:shadow-lg"

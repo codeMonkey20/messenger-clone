@@ -15,7 +15,6 @@ import useDebouncedState from "@/hooks/useDebouncedState";
 import { useEffect, useState } from "react";
 import { User } from "@/types/User";
 import Link from "next/link";
-import snake from "@/lib/snake";
 import PopoverMenuItem from "@/components/Room/HigherOrder/PopoverMenuItem";
 import { IoIosCall, IoIosSettings } from "react-icons/io";
 import LoadingBar from "@/components/LoadingBar";
@@ -36,10 +35,11 @@ import axios from "axios";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/shadcn/avatar";
 import { Skeleton } from "@/components/shadcn/skeleton";
 import ChatListSkeleton from "@/components/Room/Skeleton/ChatListSkeleton";
-import Head from "next/head";
 import { MessagesDB } from "@/types/MessagesDB";
 import { Loader2 } from "lucide-react";
 import usePageFocus from "@/hooks/usePageFocus";
+import { FaHamburger } from "react-icons/fa";
+import { Sheet, SheetContent, SheetFooter, SheetHeader, SheetTrigger } from "@/components/shadcn/sheet";
 
 export default function ChatRoom() {
   const router = useRouter();
@@ -63,6 +63,7 @@ export default function ChatRoom() {
   const [isSomeoneTyping, setIsSomeoneTyping] = useState(false);
   const [messagesLoad, setMessagesLoad] = useState(false);
   const [receiverDetails, setReceiverDetails] = useState<User>({});
+  const [showSheet, setShowSheet] = useState(false);
   const isFocused = usePageFocus();
 
   const onSendMessage = () => {
@@ -190,14 +191,74 @@ export default function ChatRoom() {
     return (
       <>
         <LoadingBar />
-        <main className={"flex h-screen"}>
+
+        <Sheet modal={false} open={showSheet} onOpenChange={() => setShowSheet((state) => !state)}>
+          <SheetContent className={"w-3/4 flex flex-col gap-5"}>
+            <SheetHeader>
+              <BoldText className={"text-2xl"}>Chats</BoldText>
+            </SheetHeader>
+            <ChatList>
+              {selectedUser ? (
+                chatList.map(({ _id, firstName, lastName, avatar, online }: User) => {
+                  if (chatList.length > 0)
+                    return (
+                      <Link key={_id} href={`/room/${_id}`} onClick={() => setShowSheet(false)} replace>
+                        <ChatItem
+                          key={_id}
+                          id={_id ? _id : ""}
+                          firstName={firstName ? firstName : ""}
+                          lastName={lastName ? lastName : ""}
+                          displayPicture={avatar ? avatar : ""}
+                          online={online === true}
+                          lastMessage={"Send Nudes"}
+                          typing={isSomeoneTyping}
+                          receiverDetails={receiverDetails}
+                        />
+                      </Link>
+                    );
+                })
+              ) : (
+                <ChatListSkeleton />
+              )}
+            </ChatList>
+            <SheetFooter className={"block sm:hidden"}>
+              <Popover>
+                <PopoverTrigger>
+                  <div className={"flex items-center gap-5"}>
+                    <Image src={"/gwapo_square.jpg"} className={"rounded-full"} alt={"dp"} width={34} height={34} />
+                    <div>{`${userSession.firstName} ${userSession.lastName}`}</div>
+                  </div>
+                </PopoverTrigger>
+                <PopoverContent className={"p-1"}>
+                  <div className={"flex flex-col"}>
+                    <PopoverMenuItem>
+                      <IoIosSettings className={"text-lg"} />
+                      Settings
+                    </PopoverMenuItem>
+                    <PopoverMenuItem onClick={() => signOut({ callbackUrl: "/" })}>
+                      <TbLogout className={"text-lg"} />
+                      Log out
+                    </PopoverMenuItem>
+                  </div>
+                </PopoverContent>
+              </Popover>
+            </SheetFooter>
+          </SheetContent>
+        </Sheet>
+        <main className={"flex h-screen max-h-screen"}>
           <Header>
             <div className={"h-full flex flex-col justify-between"}>
               <div className={"cursor-pointer"}>
+                <div
+                  className={"block md:hidden w-full h-12 p-3 hover:bg-gray-200 rounded-lg"}
+                  onClick={() => setShowSheet((state) => !state)}
+                >
+                  <FaHamburger className={"w-full h-full text-black/80"} />
+                </div>
                 <TooltipProvider>
                   <Tooltip>
                     <TooltipTrigger>
-                      <div className={"w-full h-12 p-3 hover:bg-gray-100 rounded-lg"}>
+                      <div className={"w-full h-12 p-3 hover:bg-gray-200 rounded-lg"}>
                         <TbMessageCircle2Filled className={"w-full h-full text-black/80"} />
                       </div>
                     </TooltipTrigger>
@@ -209,7 +270,7 @@ export default function ChatRoom() {
                 <TooltipProvider>
                   <Tooltip>
                     <TooltipTrigger>
-                      <div className={"w-full h-12 p-3 hover:bg-gray-100 rounded-lg"}>
+                      <div className={"w-full h-12 p-3 hover:bg-gray-200 rounded-lg"}>
                         <BsPeopleFill className={"w-full h-full text-black/80"} />
                       </div>
                     </TooltipTrigger>
@@ -278,6 +339,12 @@ export default function ChatRoom() {
           <ChatArea>
             <ChatAreaHeader>
               <div className={"flex items-center gap-2"}>
+                <div
+                  className={"block sm:hidden w-10 h-10 p-2 mr-2 hover:bg-gray-200 rounded-lg"}
+                  onClick={() => setShowSheet((state) => !state)}
+                >
+                  <FaHamburger className={"w-full h-full text-black/80"} />
+                </div>
                 <Avatar className="h-10 w-10">
                   {selectedUser ? (
                     <AvatarImage src={selectedUser.avatar ? selectedUser.avatar : "/Default_pfp.png"} />
@@ -298,26 +365,6 @@ export default function ChatRoom() {
                 )}
               </div>
               <div className={"flex items-center gap-4 text-primary text-4xl"}>
-                <TooltipProvider>
-                  <Tooltip>
-                    <TooltipTrigger>
-                      <IoIosCall className={"p-2 rounded-full hover:bg-muted/60"} />
-                    </TooltipTrigger>
-                    <TooltipContent>
-                      <p className={"text-dark"}>Start a voice call</p>
-                    </TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
-                <TooltipProvider>
-                  <Tooltip>
-                    <TooltipTrigger>
-                      <TiVideo className={"p-2 rounded-full hover:bg-muted/60"} />
-                    </TooltipTrigger>
-                    <TooltipContent>
-                      <p className={"text-dark"}>Start a video call</p>
-                    </TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
                 <TooltipProvider>
                   <Tooltip>
                     <TooltipTrigger>
